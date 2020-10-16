@@ -1,6 +1,6 @@
 const scriptName = "test";
 const manager = "커맨드봇";
-const master = "어떤 이름";
+const master = "없음";
 
 //var
 let date;
