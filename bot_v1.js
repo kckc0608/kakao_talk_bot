@@ -1,6 +1,6 @@
 const scriptName = "test";
 const manager = "커맨드봇";
-const master = "없음";
+const master = "이름";
 const bot_name = '버듀(가명)';
 
 //var
@@ -76,7 +76,7 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
       //replier.reply(show_value(user_meet));
       //set_now_time();
       //replier.reply(show_value(send_time));
-      //java.lang.Thread.sleep(1000*5);
+      //java.lang.Thread.sleep(1000*send_delay);
       //replier.reply(set_now_time());
       //replier.reply(now_hour + ' ' + now_min + ' ' + now_sec + ' '+ now_milsec);
       //replier.reply(show_value(send_time));
@@ -84,12 +84,12 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
     }
   }
 
-  else if (!isGroupChat && (sender != "은주") && (sender != manager))  // 본 계정으로 톡이 온 경우
+  else if (!isGroupChat && (sender != manager))  // 본 계정으로 톡이 온 경우
   {
     if (!(room in timer_set))
     { timer_set[room] = false; }
 
-    java.lang.Thread.sleep(5000);
+    java.lang.Thread.sleep(1000*send_delay);
 
     if (set_now_time())
     {
@@ -118,7 +118,7 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
         {
           timer_set[room] = true;
           replier.reply(manager, room + " 에서 " + sender + " 에게 카톡이 왔습니다.");
-          replier.reply(manager, show_value(timer_set));
+          replier.reply(manager, "[타이머 현황]\n" + show_value(timer_set));
           java.lang.Thread.sleep(timer_time);
           if (timer_set[room])
           {
@@ -137,7 +137,7 @@ function set_reply(recv_msg)
   msg_send = "일정시간 경과 후 자동응답 테스트 중입니다. :: 메세지를 수신 후 30분 경과했습니다.";
 }
 
-
+/* 오브젝트 내용을 key : value 쌍으로 만들어 문자열로 반환 */
 function show_value(obj)
 {
   var str = "";
@@ -147,6 +147,7 @@ function show_value(obj)
   return str.trim();
 }
 
+/* 현재 시간을 저장, 현재 시간이 send_time 이후라면 true 반환 */
 function set_now_time()
 {
   date = new Date();
@@ -171,24 +172,22 @@ function set_now_time()
   {return true;}
   else if (now_sec > send_time['second'])
   {return true;}
-  else
+  else if (now_milsec > send_time['milsec'])
   {
-    if (now_sec < send_time['second'])
-    {return false;}
-
-    else if (now_milsec > send_time['milsec'])
-    {return true;}
-
-    else
-    {return false;}
+    if (now_sec < send_time['second']) {return false;}
+    else {return true;}
   }
+  else
+  {return false;}
 }
 
+/* study_time 객체에 수업시간 저장 */
 function set_study(day, start, end) {
   for (var i = start; i < end; i++)
   {study_time[day][i] = end;}
 }
 
+/* 현재 시간이 수업시간인지 체크 true / false 반환 */
 function check_study() {
   if (now_hour in study_time[now_day])
   {
@@ -200,6 +199,7 @@ function check_study() {
 
 }
 
+/* 현재 시간이 수면시간인지 체크 true / false 반환 */
 function check_sleep() {
   if (sleep_start > sleep_end)
   {
@@ -217,6 +217,11 @@ function check_sleep() {
   }
 }
 
+/* 메세지를 수신했을 때, send_delay초 후의 시간을 send_time 객체에 저장
+   현재 시간이 send_time 이후일 때만 메세지를 보내게 된다.
+   즉, 메세지를 수신하고나서 send_delay초 이내로 메세지를 또 수신한 경우,
+   마지막에 수신한 메세지에 대해서만 답장을 보낸다.
+*/
 function set_send_time(year, month, date, hour, min, sec, milsec)
 {
   sec += send_delay;
