@@ -23,16 +23,32 @@ for (var i = 0; i < user_meet_data.length; i++)
 
 let study_time = { '0' : {}, '1' : {}, '2' : {}, '3' : {}, '4' : {}, '5' : {}, '6' : {} };
 let send_time = {'year'  : 0, 'month' : 0, 'date'  : 0, 'hour'  : 0, 'minute': 0, 'second': 0, 'milsec': 0};
-let situation = {'who' : {}, 'what' : {}, 'when' : {}, 'where' : {}, 'how' : {}, 'why' : {} }
+
+//TODO & Description
+let situation = {'who' : {}, 'what' : {}, 'when' : {}, 'where' : {}, 'how' : {}, 'why' : {} };
+/* 대화 상황 판단 변수
+   보통 잡답은 '사건'과 '반응'으로 이루어진다.
+   Ex) 오늘 서울에서 시위를 했대 => 누가 = ?, 무엇을 = 시위를, 언제 = 오늘, 어디서 = 서울에서, 어떻게 = (시위를)하다, 왜 = ?
+       여기에서 나올 수 있는 반응은 적어도 2가지다. (상황 객체의 속성중 비어있는 값)
+       누가했는데? / 왜 했는데?
+   이런 식으로 봇과 자연스러운 잡담을 나눌 때 상황을 판단하는데 쓰일 변수이다. (TODO)
+   정확히 어디서 했는데? 정확히 어떤 시위였는데? 와 같은 정보의 구체화 요구는 "시위", "서울" 이라는 단어에 하위 속성을 부여해서
+   하위 속성이 비어있을 경우 반응이 나올 수 있도록한다.
+*/
+let emotion = {'happy' : false, 'sad' : false, 'upset' : false };
+/* 봇의 감정상태를 나타내는 변수
+   봇의 감정상태에 따라 말투, 반응이 달라질 수 있도록 한다. (TODO)
+   봇이 공감능력을 가질 수 있도록 역지사지에 대입하는 용도의 감정객체를 별도로 만든다. (TODO)
+*/
 
 //일정 세팅
 set_study(1, 13, 16);
-set_study(2, 9, 11);
+set_study(2,  9, 11);
 set_study(2, 14, 17);
 set_study(2, 19, 20);
 set_study(3, 11, 18);
 set_study(3, 19, 20);
-set_study(4, 9, 14);
+set_study(4,  9, 14);
 set_study(5, 11, 12);
 set_study(6, 12, 13);
 
@@ -69,9 +85,16 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
     }
     else if (msg_recv == "야")
     {replier.reply("네?");}
+    else if (msg_recv == "세션줘")
+    {
+      replier.reply("5초 뒤에 세션 드리겠습니다.");
+      java.lang.Thread.sleep(1000*5);
+      replier.reply("세션메세지");
+    }
     else
     {
-      replier.reply("확인하였습니다.")
+      replier.reply("악!!")
+
       //replier.reply()
       //replier.reply(show_value(user_meet));
       //set_now_time();
@@ -81,6 +104,16 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
       //replier.reply(now_hour + ' ' + now_min + ' ' + now_sec + ' '+ now_milsec);
       //replier.reply(show_value(send_time));
 
+    }
+  }
+  else if (sender == manager)  // 관리자봇이 톡을 보낸경우 (세션확인용)
+  {
+    if (msg == "세션메세지")
+    {
+      if (Api.canReply(manager))
+      {replier.reply("세션을 열었습니다.");}
+      else
+      {replier.reply("세션이 닫혀있습니다.");}
     }
   }
 
