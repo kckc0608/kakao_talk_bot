@@ -53,13 +53,19 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
     {
       if (msg_recv[0] != "타이머")
       {
-        timer_set[msg_recv[0].trim()] = false;
+        if (msg_recv[0] == "모두")
+        {
+          var key = Object.keys(timer_set);
+          for (var i in key)
+          {timer_set[key[i]] = false;}
+        }
+        else
+        {timer_set[msg_recv[0].trim()] = false;}
         replier.reply("타이머를 해제했습니다.");
       }
-      var key = Object.keys(timer_set);
       var rest = "[타이머 목록]" + '\n';
       rest += show_value(timer_set);
-      replier.reply(rest);
+      replier.reply(rest.trim());
     }
     else if (msg_recv == "야")
     {replier.reply("네?");}
@@ -111,7 +117,7 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
         if (!timer_set[room])
         {
           timer_set[room] = true;
-          replier.reply(manager,"[notice] " + room + " 에서 " + sender + " 에게 카톡이 왔습니다.");
+          replier.reply(manager, room + " 에서 " + sender + " 에게 카톡이 왔습니다.");
           replier.reply(manager, show_value(timer_set));
           java.lang.Thread.sleep(timer_time);
           if (timer_set[room])
