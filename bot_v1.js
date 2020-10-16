@@ -1,6 +1,6 @@
 const scriptName = "test";
 const manager = "커맨드봇";
-const master = "김이박";
+const master = "어떤 이름";
 
 //var
 let date;
@@ -52,12 +52,12 @@ set_study(6, 12, 13);
 
 function response(room, msg, sender, isGroupChat, replier, imageDB, packageName) {
   DataBase.appendDataBase("testDB", msg + '\n');
-  
+
   //auto setting
   set_now_time();
   set_send_time(now_year, now_month, now_date, now_hour, now_min, now_sec, now_milsec);
   set_sleep(0, 9);
-  
+
   if (now_hour in study_time[now_day])
   {
     study = true;
@@ -65,15 +65,15 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
   }
   else
   {study = false;}
-    
+
   set_reply(msg);
-  
+
   //user setting
   //sleep = false;
-  
+
   //DANGEROUS TEST :: 단톡방으로 채팅이 갈 수 있으니 주의!!!
   //replier.reply(room + ' ' + sender);
-  
+
   if (sender == master) // 내가 커맨드봇에게 메세지 보낸 경우
   {
     let msg_recv = msg.split(' ');
@@ -96,38 +96,38 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
       //replier.reply(set_now_time());
       //replier.reply(now_hour + ' ' + now_min + ' ' + now_sec + ' '+ now_milsec);
       //replier.reply(show_value(send_time));
-      
-      
-      
+
+
+
     }
   }
-  
+
   else if (!isGroupChat && (sender != "은주") && (sender != manager)) //본 계정으로 톡이 온 경우
   {
     if (!(room in timer_set))
     { timer_set[room] = false; }
-    
+
     java.lang.Thread.sleep(5000);
-    
+
     if (set_now_time())
-    { 
+    {
       if (!(sender in user_meet))  /** 만난적 없는 사람의 경우, 인사말 추가 */
       {
         DataBase.appendDataBase("user_meet",sender+'\n');
         user_meet[sender] = 1;
         replier.reply(msg_introduce);
       }
-    
+
       //test
       //replier.reply(now_day + ' ' + now_hour + ' ' + study );
       //test
-    
+
       if (sleep)
       {replier.reply(msg_sleep);}
-      
+
       else if (study)
       {replier.reply(msg_study);}
-      
+
       else  // free now
       {
         if (!timer_set[room])
@@ -135,10 +135,10 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
           timer_set[room] = true;
           replier.reply(manager,"[notice] " + room + " 에서 " + sender + " 에게 카톡이 왔습니다.");
           replier.reply(manager, show_value(timer_set));
-          
+
           //test
           //timer_time = 1000*10;
-          
+
           java.lang.Thread.sleep(timer_time);
           if (timer_set[room])
           {
@@ -175,7 +175,7 @@ function set_now_time()
   now_sec = date.getSeconds();
   now_day = date.getDay();
   now_milsec = date.getMilliseconds();
-  
+
   if (now_year > send_time['year'])
   {return true;}
   else if (now_month > send_time['month'])
@@ -185,17 +185,17 @@ function set_now_time()
   else if (now_hour > send_time['hour'])
   {return true;}
   else if (now_min > send_time['minute'])
-  {return true;}  
+  {return true;}
   else if (now_sec > send_time['second'])
   {return true;}
   else
-  { 
+  {
     if (now_sec < send_time['second'])
     {return false;}
-    
+
     else if (now_milsec > send_time['milsec'])
     {return true;}
-    
+
     else
     {return false;}
   }
@@ -203,7 +203,7 @@ function set_now_time()
 
 function set_study(day, start, end) {
   for (var i = start; i < end; i++)
-  {study_time[day][i] = end;}  
+  {study_time[day][i] = end;}
 }
 
 function set_sleep(start, end) {
@@ -231,25 +231,25 @@ function set_reply(recv_msg)
 function set_send_time(year, month, date, hour, min, sec, milsec)
 {
   sec += send_delay;
-  
+
   if (sec > 59)
   {
     sec %= 60;
     min += 1;
   }
-  
+
   if (min > 59)
   {
     min %= 60;
     hour += 1;
   }
-  
+
   if (hour > 23)
   {
     hour %= 24;
     date += 1;
   }
-  
+
   if (month == 4 || month == 6 || month == 9 || month == 11) // to 30
   {
     if(date > 30)
@@ -285,13 +285,13 @@ function set_send_time(year, month, date, hour, min, sec, milsec)
       month += 1;
     }
   }
-  
+
   if (month > 11)
   {
     month = 0;
     year += 1;
   }
-  
+
   send_time['year'] = year;
   send_time['month'] = month;
   send_time['date'] = date;
