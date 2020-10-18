@@ -2,12 +2,12 @@ const scriptName = "test";
 const manager = "커맨드봇";
 const master = "이름";
 const bot_name = '버듀(가명)';
-
+//DataBase.setDataBase("dict/"+"words_helo");
 //var
 let date;
 let msg_send;
 let msg_introduce = "안녕하세요! 저는 "+ master + "님의 봇 '" + bot_name + "' 입니다." + '\n' + "앞으로 " + master + "님이 답장하실 수 없을 때는 제가 대신 답장을 하니 너무 놀라지 말아주세요 :)";
-let msg_sleep = "지금은 "+ master + "님이 자고 있습니다. 아침에 다시 연락해주세요.";
+let msg_sleep = "지금은 "+ master + "님이 자고 있습니다. 아침에 다시 연락해주시거나 메세지를 남겨주세요.";
 let msg_study;
 let now_year; let now_month; let now_date; let now_day; let now_hour; let now_min; let now_sec; let now_milsec;
 let study;
@@ -18,28 +18,25 @@ let sleep_start = 0;
 let sleep_end = 9;
 let user_meet = {};
 let user_meet_data = DataBase.getDataBase("user_meet").split('\n');
-for (var i = 0; i < user_meet_data.length; i++)
+let dict_word_data = DataBase.getDataBase("dict_word").split('\n');
+for (var i = 0; i < user_meet_data.length-1; i++)
 {user_meet[user_meet_data[i].trim()] = 1;}
+let dict_word = {};
+for (var i = 0; i < dict_word_data.length-1; i++)
+{
+  dict_word[dict_word_data[i].trim()] = new Object;
+  var file_name = "dict/words_" + dict_word_data[i].trim();
+  var data = DataBase.getDataBase(file_name).split('\n');
+  for (var j = 0; j < data.length-1; j++)
+  {dict_word[dict_word_data[i].trim()][data[j].trim()] = 1;}
+}
 
 let study_time = { '0' : {}, '1' : {}, '2' : {}, '3' : {}, '4' : {}, '5' : {}, '6' : {} };
 let send_time = {'year'  : 0, 'month' : 0, 'date'  : 0, 'hour'  : 0, 'minute': 0, 'second': 0, 'milsec': 0};
 
-//TODO & Description
+//TODO
 let situation = {'who' : {}, 'what' : {}, 'when' : {}, 'where' : {}, 'how' : {}, 'why' : {} };
-/* 대화 상황 판단 변수
-   보통 잡답은 '사건'과 '반응'으로 이루어진다.
-   Ex) 오늘 서울에서 시위를 했대 => 누가 = ?, 무엇을 = 시위를, 언제 = 오늘, 어디서 = 서울에서, 어떻게 = (시위를)하다, 왜 = ?
-       여기에서 나올 수 있는 반응은 적어도 2가지다. (상황 객체의 속성중 비어있는 값)
-       누가했는데? / 왜 했는데?
-   이런 식으로 봇과 자연스러운 잡담을 나눌 때 상황을 판단하는데 쓰일 변수이다. (TODO)
-   정확히 어디서 했는데? 정확히 어떤 시위였는데? 와 같은 정보의 구체화 요구는 "시위", "서울" 이라는 단어에 하위 속성을 부여해서
-   하위 속성이 비어있을 경우 반응이 나올 수 있도록한다.
-*/
 let emotion = {'happy' : false, 'sad' : false, 'upset' : false };
-/* 봇의 감정상태를 나타내는 변수
-   봇의 감정상태에 따라 말투, 반응이 달라질 수 있도록 한다. (TODO)
-   봇이 공감능력을 가질 수 있도록 역지사지에 대입하는 용도의 감정객체를 별도로 만든다. (TODO)
-*/
 
 //일정 세팅
 set_study(1, 13, 16);
@@ -91,19 +88,36 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
       java.lang.Thread.sleep(1000*5);
       replier.reply("세션메세지");
     }
+    else if (msg == "나 잔다")
+    {
+      sleep_start = now_hour;
+      replier.reply("지금부터 " + sleep_end +"시 까지 취침시간으로 설정했습니다.");
+    }
+    else if (msg == "지금 일어났어")
+    {
+      sleep_end = now_hour;
+      replier.reply(sleep_start + "시부터 지금까지 취침시간으로 설정하였습니다.");
+    }
+    else if (msg == "취침시간 초기화해줘")
+    {
+      sleep_end = 9;
+      sleep_start = 0;
+      replier.reply(sleep_start+ "시부터 " + sleep_end + "시까지 취침시간으로 초기화하였습니다.");
+    }
     else
     {
       replier.reply("악!!")
-
-      //replier.reply()
+      //replier.reply("[deic_word]\n"+show_value(dict_word))
+      //replier.reply("[answer]\n"+show_value(dict_word['answer']))
+      //replier.reply("[hello]\n"+show_value(dict_word['hello']))
       //replier.reply(show_value(user_meet));
+      ///*
       //set_now_time();
       //replier.reply(show_value(send_time));
       //java.lang.Thread.sleep(1000*send_delay);
       //replier.reply(set_now_time());
       //replier.reply(now_hour + ' ' + now_min + ' ' + now_sec + ' '+ now_milsec);
-      //replier.reply(show_value(send_time));
-
+      //*/
     }
   }
   else if (sender == manager)  // 관리자봇이 톡을 보낸경우 (세션확인용)
@@ -117,7 +131,7 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
     }
   }
 
-  else if (!isGroupChat && (sender != manager))  // 본 계정으로 톡이 온 경우
+  else if (!isGroupChat && (sender != manager) &&(sender != "은주") ) // 본 계정으로 톡이 온 경우
   {
     if (!(room in timer_set))
     { timer_set[room] = false; }
@@ -136,7 +150,8 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
       set_reply(msg)
 
       //test
-      //replier.reply(now_day + ' ' + now_hour + ' ' + study );
+      //replier.reply("testing");
+      //replier.reply(file_name);
       //test
 
       if (check_sleep())
@@ -150,6 +165,7 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
         if (!timer_set[room])
         {
           timer_set[room] = true;
+          //replier.reply("testing now");
           replier.reply(manager, room + " 에서 " + sender + " 에게 카톡이 왔습니다.");
           replier.reply(manager, "[타이머 현황]\n" + show_value(timer_set));
           java.lang.Thread.sleep(timer_time);
@@ -202,9 +218,15 @@ function set_now_time()
   else if (now_hour > send_time['hour'])
   {return true;}
   else if (now_min > send_time['minute'])
-  {return true;}
+  {
+    if (now_hour < send_time['hour'])
+    return true;
+  }
   else if (now_sec > send_time['second'])
-  {return true;}
+  {
+    if (now_min < send_time['minute']) {return false;}
+    else {return true;}
+  }
   else if (now_milsec > send_time['milsec'])
   {
     if (now_sec < send_time['second']) {return false;}
@@ -224,7 +246,7 @@ function set_study(day, start, end) {
 function check_study() {
   if (now_hour in study_time[now_day])
   {
-    msg_study = master + "님은 지금 수업중입니다." + '\n' + study_time[now_day][now_hour] + "시에 수업이 끝나니 그때 연락주세요.";
+    msg_study = master + "님은 지금 수업중입니다." + '\n' + study_time[now_day][now_hour] + "시에 수업이 끝나니 그때 연락주시거나 메세지를 남겨주세요.";
     return true;
   }
   else
