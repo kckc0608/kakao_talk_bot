@@ -2,6 +2,7 @@ const scriptName = "test";
 const manager = "커맨드봇";
 const master = "이름";
 const bot_name = '버듀(가명)';
+//const _test = require('testing');
 //DataBase.setDataBase("dict/"+"words_helo");
 //var
 let date;
@@ -33,6 +34,7 @@ for (var i = 0; i < dict_word_data.length-1; i++)
 
 let study_time = { '0' : {}, '1' : {}, '2' : {}, '3' : {}, '4' : {}, '5' : {}, '6' : {} };
 let send_time = {'year'  : 0, 'month' : 0, 'date'  : 0, 'hour'  : 0, 'minute': 0, 'second': 0, 'milsec': 0};
+let noticed_room = {};
 
 //TODO
 let situation = {'who' : {}, 'what' : {}, 'when' : {}, 'where' : {}, 'how' : {}, 'why' : {} };
@@ -64,46 +66,52 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
     let msg_recv = msg.split(' ');
     if (msg_recv.length == 2 && msg_recv[1].trim() == "확인")
     {
-      if (msg_recv[0] != "타이머")
+      if (msg_recv[0] != "목록")
       {
         if (msg_recv[0] == "모두")
         {
-          var key = Object.keys(timer_set);
+          var key = Object.keys(noticed_room);
           for (var i in key)
-          {timer_set[key[i]] = false;}
+          {noticed_room[key[i]]['send'] = false;}
         }
         else
-        {timer_set[msg_recv[0].trim()] = false;}
-        replier.reply("타이머를 해제했습니다.");
+        {noticed_room[msg_recv[0].trim()]['send'] = false;}
+        replier.reply("확인하였습니다.");
       }
       var rest = "[타이머 목록]" + '\n';
       rest += show_value(timer_set);
       replier.reply(rest.trim());
     }
+
     else if (msg_recv == "야")
     {replier.reply("네?");}
+
     else if (msg_recv == "세션줘")
     {
       replier.reply("5초 뒤에 세션 드리겠습니다.");
       java.lang.Thread.sleep(1000*5);
       replier.reply("세션메세지");
     }
+
     else if (msg == "나 잔다")
     {
       sleep_start = now_hour;
       replier.reply("지금부터 " + sleep_end +"시 까지 취침시간으로 설정했습니다.");
     }
+
     else if (msg == "지금 일어났어")
     {
       sleep_end = now_hour;
       replier.reply(sleep_start + "시부터 지금까지 취침시간으로 설정하였습니다.");
     }
+
     else if (msg == "취침시간 초기화해줘")
     {
       sleep_end = 9;
       sleep_start = 0;
       replier.reply(sleep_start+ "시부터 " + sleep_end + "시까지 취침시간으로 초기화하였습니다.");
     }
+
     else
     {
       replier.reply("악!!")
@@ -133,8 +141,13 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
 
   else if (!isGroupChat && (sender != manager) &&(sender != "은주") ) // 본 계정으로 톡이 온 경우
   {
-    if (!(room in timer_set))
-    { timer_set[room] = false; }
+    if (!(room in noticed_room))
+    {
+      noticed_room[room] = {};
+      noticed_room[room].send = false;
+      noticed_room[room].sleep = false;
+      noticed_room[room].study = false;
+    }
 
     java.lang.Thread.sleep(1000*send_delay);
 
@@ -154,27 +167,16 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
       //replier.reply(file_name);
       //test
 
-      if (check_sleep())
-      {replier.reply(msg_sleep);}
-
-      else if (check_study())
-      {replier.reply(msg_study);}
-
-      else  // free now
+      if (check_sleep() && !noticed_room[room]['sleep'])
       {
-        if (!timer_set[room])
-        {
-          timer_set[room] = true;
-          //replier.reply("testing now");
-          replier.reply(manager, room + " 에서 " + sender + " 에게 카톡이 왔습니다.");
-          replier.reply(manager, "[타이머 현황]\n" + show_value(timer_set));
-          java.lang.Thread.sleep(timer_time);
-          if (timer_set[room])
-          {
-            replier.reply(msg_send);
-            timer_set[room] = false;
-          }
-        }
+        replier.reply(msg_sleep);
+        noticed_room[room].sleep = true;
+      }
+
+      else if (check_study() && !noticed_room[soom]['study'])
+      {
+        replier.reply(msg_study);
+        noticed_room[room].study = true;
       }
     }
   }
@@ -250,7 +252,12 @@ function check_study() {
     return true;
   }
   else
-  {return false;}
+  {
+    var key = Object.keys(noticed_room);
+    for (var i in key)
+      {noticed_room[key[i]]['study'] = false;}
+    return false;
+  }
 
 }
 
@@ -261,7 +268,12 @@ function check_sleep() {
     if ((sleep_start <= now_hour && now_hour < 24) || (0 <= now_hour && sleep_end))
     {return true;}
     else
-    {return false;}
+    {
+      var key = Object.keys(noticed_room);
+      for (var i in key)
+        {noticed_room[key[i]]['sleep'] = false;}
+      return false;
+    }
   }
   else
   {
