@@ -2,16 +2,16 @@ const scriptName = "test";
 const manager = "커맨드봇";
 const master = "이름";
 const bot_name = '버듀(가명)';
-//const _test = require('testing');
-//DataBase.setDataBase("dict/"+"words_helo");
+//const set_msg = require('auto_answer');
+//DataBase.setDataBase("dict/"+"words_josa");
 //var
+let test = true;
 let date;
 let msg_send;
 let msg_introduce = "안녕하세요! 저는 "+ master + "님의 봇 '" + bot_name + "' 입니다." + '\n' + "앞으로 " + master + "님이 답장하실 수 없을 때는 제가 대신 답장을 하니 너무 놀라지 말아주세요 :)";
 let msg_sleep = "지금은 "+ master + "님이 자고 있습니다. 아침에 다시 연락해주시거나 메세지를 남겨주세요.";
 let msg_study;
 let now_year; let now_month; let now_date; let now_day; let now_hour; let now_min; let now_sec; let now_milsec;
-let study;
 let timer_set = new Object();
 let timer_time = 1000*60*30;
 let send_delay = 5;
@@ -19,26 +19,37 @@ let sleep_start = 0;
 let sleep_end = 9;
 let user_meet = {};
 let user_meet_data = DataBase.getDataBase("user_meet").split('\n');
-let dict_word_data = DataBase.getDataBase("dict_word").split('\n');
 for (var i = 0; i < user_meet_data.length-1; i++)
 {user_meet[user_meet_data[i].trim()] = 1;}
-let dict_word = {};
-for (var i = 0; i < dict_word_data.length-1; i++)
-{
-  dict_word[dict_word_data[i].trim()] = new Object;
-  var file_name = "dict/words_" + dict_word_data[i].trim();
-  var data = DataBase.getDataBase(file_name).split('\n');
-  for (var j = 0; j < data.length-1; j++)
-  {dict_word[dict_word_data[i].trim()][data[j].trim()] = 1;}
-}
 
 let study_time = { '0' : {}, '1' : {}, '2' : {}, '3' : {}, '4' : {}, '5' : {}, '6' : {} };
 let send_time = {'year'  : 0, 'month' : 0, 'date'  : 0, 'hour'  : 0, 'minute': 0, 'second': 0, 'milsec': 0};
 let noticed_room = {};
 
+// index 저장
+let word_kind = DataBase.getDataBase("dict_word").split('\n');
+let dictionary = {};
+// index 에 연결된 단어들 모두 저장
+for (var i = 0; i < word_kind.length-1; i++)
+{
+  dictionary[word_kind[i].trim()] = new Object;
+  var file_name = "dict/words_" + word_kind[i].trim();
+  var word_data = DataBase.getDataBase(file_name).split('\n');
+  for (var j = 0; j < word_data.length-1; j++)
+  {
+    word_detail = word_data[j].trim().split(' ');
+    dictionary[word_kind[i].trim()][word_detail[0].trim()] = [];
+    for (var k = 1; k < word_detail.length; k++)
+    {
+      dictionary[word_kind[i].trim()][word_detail[0].trim()].push(word_detail[k]);
+    }
+  }
+}
+
 //TODO
 let situation = {'who' : {}, 'what' : {}, 'when' : {}, 'where' : {}, 'how' : {}, 'why' : {} };
-let emotion = {'happy' : false, 'sad' : false, 'upset' : false };
+let sentence  = {'seosul' : "", 'joo' : "", 'mokjeok' : "", 'bo' : "", 'busa' : "", 'kwanhyeong' : "", 'doknip' : ""};
+let emotion   = {'happy' : false, 'sad' : false, 'upset' : false };
 
 //일정 세팅
 set_study(1, 13, 16);
@@ -63,7 +74,8 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
 
   if (sender == master) // 내가 커맨드봇에게 메세지 보낸 경우
   {
-    let msg_recv = msg.split(' ');
+    //let analize_result = analize_reply(msg);
+    msg_recv = msg.split(' ');
     if (msg_recv.length == 2 && msg_recv[1].trim() == "확인")
     {
       if (msg_recv[0] != "목록")
@@ -115,8 +127,10 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
     else
     {
       replier.reply("악!!")
-      //replier.reply("[deic_word]\n"+show_value(dict_word))
-      //replier.reply("[answer]\n"+show_value(dict_word['answer']))
+      //replier.reply(msg.length)
+      replier.reply("[dictionary]\n"+show_value(dictionary))
+      replier.reply("[answer]\n"+show_value(dictionary['josa']))
+      replier.reply(analize_reply(msg));
       //replier.reply("[hello]\n"+show_value(dict_word['hello']))
       //replier.reply(show_value(user_meet));
       ///*
@@ -139,7 +153,7 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
     }
   }
 
-  else if (!isGroupChat && (sender != manager) &&(sender != "은주") ) // 본 계정으로 톡이 온 경우
+  else if (!isGroupChat && (sender != manager) &&(!test) ) // 본 계정으로 톡이 온 경우
   {
     if (!(room in noticed_room))
     {
@@ -173,7 +187,7 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
         noticed_room[room].sleep = true;
       }
 
-      else if (check_study() && !noticed_room[soom]['study'])
+      else if (check_study() && !noticed_room[room]['study'])
       {
         replier.reply(msg_study);
         noticed_room[room].study = true;
@@ -183,9 +197,32 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
 }
 
 //function
-function set_reply(recv_msg)
+function analize_reply(recv_msg)
 {
-  msg_send = "일정시간 경과 후 자동응답 테스트 중입니다. :: 메세지를 수신 후 30분 경과했습니다.";
+  let result = []; let words = recv_msg.split(' '); // 띄어쓰기 기준으로 쪼개기
+  result.push("동사: " + words[words.length-1]);
+  for (var i = 0; i < words.length-1; i++)
+  {
+    let check = words[i].trim();
+    if (check.length == 1)
+    {
+      if (check == "야")
+      {result.push("calling");}
+      else
+      {result.push("unknown");}
+    }
+    if (check.length > 1)
+    {
+      if (check.substr(check.length-1, 1) in dictionary["josa"])
+      {
+        result.push(dictionary["josa"][check.substr(check.length-1, 1)]);
+      }
+    }
+    if (check.length > 2)
+    {}
+  }
+
+  return result;
 }
 
 /* 오브젝트 내용을 key : value 쌍으로 만들어 문자열로 반환 */
