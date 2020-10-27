@@ -48,7 +48,6 @@ for (var i = 0; i < word_kind.length-1; i++)
 
 //TODO
 let situation = {'who' : {}, 'what' : {}, 'when' : {}, 'where' : {}, 'how' : {}, 'why' : {} };
-let sentence  = {'seosul' : "", 'joo' : "", 'mokjeok' : "", 'bo' : "", 'busa' : "", 'kwanhyeong' : "", 'doknip' : ""};
 let emotion   = {'happy' : false, 'sad' : false, 'upset' : false };
 
 //일정 세팅
@@ -74,7 +73,6 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
 
   if (sender == master) // 내가 커맨드봇에게 메세지 보낸 경우
   {
-    //let analize_result = analize_reply(msg);
     msg_recv = msg.split(' ');
     if (msg_recv.length == 2 && msg_recv[1].trim() == "확인")
     {
@@ -104,7 +102,6 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
       java.lang.Thread.sleep(1000*5);
       replier.reply("세션메세지");
     }
-
     else if (msg == "나 잔다")
     {
       sleep_start = now_hour;
@@ -126,11 +123,11 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
 
     else
     {
-      replier.reply("악!!")
+      //replier.reply("?")
       //replier.reply(msg.length)
-      replier.reply("[dictionary]\n"+show_value(dictionary))
-      replier.reply("[answer]\n"+show_value(dictionary['josa']))
-      replier.reply(analize_reply(msg));
+      //replier.reply("[dictionary]\n"+show_value(dictionary))
+      replier.reply("[josa]\n"+show_value(dictionary['josa']))
+      replier.reply(show_value(analize_reply(msg)));
       //replier.reply("[hello]\n"+show_value(dict_word['hello']))
       //replier.reply(show_value(user_meet));
       ///*
@@ -141,6 +138,7 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
       //replier.reply(now_hour + ' ' + now_min + ' ' + now_sec + ' '+ now_milsec);
       //*/
     }
+
   }
   else if (sender == manager)  // 관리자봇이 톡을 보낸경우 (세션확인용)
   {
@@ -199,30 +197,44 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
 //function
 function analize_reply(recv_msg)
 {
-  let result = []; let words = recv_msg.split(' '); // 띄어쓰기 기준으로 쪼개기
-  result.push("동사: " + words[words.length-1]);
+  let words = recv_msg.split(' '); // 띄어쓰기 기준으로 쪼개기
+  let sentence = new Object();
+  sentence.seosul = words[words.length-1];
   for (var i = 0; i < words.length-1; i++)
   {
     let check = words[i].trim();
-    if (check.length == 1)
+    if (check.length > 2 && (check.substr(check.length-2, 2) in dictionary["josa"]))
     {
-      if (check == "야")
-      {result.push("calling");}
-      else
-      {result.push("unknown");}
-    }
-    if (check.length > 1)
-    {
-      if (check.substr(check.length-1, 1) in dictionary["josa"])
+      let word = check.substr(0, check.length-2);
+      switch (dictionary["josa"][check.substr(check.length-2, 2)][0])
       {
-        result.push(dictionary["josa"][check.substr(check.length-1, 1)]);
+        case "주":
+          sentence.joo = word;
+          break;
+
+        case "부사":
+          sentence.boosa = word;
       }
     }
-    if (check.length > 2)
-    {}
-  }
+    else if (check.length > 1 && (check.substr(check.length-1, 1) in dictionary["josa"]))
+    {
+      let word = check.substr(0, check.length-1);
+      switch (dictionary["josa"][check.substr(check.length-1, 1)][0])
+      {
+        case "주":
+          sentence.joo = word;
+          break;
 
-  return result;
+        case "목":
+          sentence.mokjeok = word;
+          break;
+
+        case "부사":
+          sentence.boosa = word;
+      }
+    }
+  }
+  return sentence;
 }
 
 /* 오브젝트 내용을 key : value 쌍으로 만들어 문자열로 반환 */
